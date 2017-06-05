@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="mycanvas" width="800px" height="600px"></canvas>
+
+</body>
+
+</html>
+<script type="text/javascript" src="js/sky.js"></script>
+<script type="text/javascript" src="js/land.js"></script>
+<script type="text/javascript" src="js/pipe.js"></script>
+<script type="text/javascript" src="js/bird.js"></script>
+<script type="text/javascript" src="js/time.js"></script>
+<script>
+    //获取canvas对象
+    var cs = document.getElementById('mycanvas');
+    //获取canvas对象的画图工具
+    var context = cs.getContext('2d');
+    var imgsArr = ['birds.png', 'land.png', 'pipe1.png', 'pipe2.png', 'sky.png'];
+    var imgsObj = {};
+    var drawLists = [];
+    loadImgs(imgsArr, function () {
+
+        //绘制天空(2个)
+        for (var i = 0; i < 2; i++) {
+            var sky = new Sky({
+                img: imgsObj.sky,
+                context: context,
+                x: imgsObj.sky.width * i
+            });
+            drawLists.push(sky);
+        }
+        //绘制管道(6个)
+        for (var i = 0; i < 6; i++) {
+            var pipe = new Pipe({
+                topImg: imgsObj.pipe2,
+                bottomImg: imgsObj.pipe1,
+                context: context,
+                x: 300 + 200 * i
+            })
+            drawLists.push(pipe);
+        }
+        //绘制陆地(6个)
+        for (var i = 0; i < 6; i++) {
+            var land = new Land({
+                img: imgsObj.land,
+                context: context,
+                x: imgsObj.land.width * i
+            })
+            drawLists.push(land);
+        }
+        //绘制小鸟
+        var bird = new Bird({
+            img: imgsObj.birds,
+            context: context,
+        })
+        drawLists.push(bird)
+        //绘制文字
+        var time = new Time({
+            context: context
+        })
+        drawLists.push(time)
+
+        function render() {
+            var flag = true;
+            context.clearRect(0, 0, cs.width, cs.height);
+            context.beginPath();
+            drawLists.forEach(function (value) {
+                value.draw();
+
+            })
+            if (bird.y > cs.height - land.height - 42 || bird.y < -8) {
+                flag = false;
+            }
+            if (context.isPointInPath(bird.x + bird.birdWidth - 10, bird.y + bird.birdHeight - 10)) {
+                flag = false;
+            }
+            if (flag) {
+                requestAnimationFrame(render);
+            } else {
+                context.beginPath();
+                context.fillStyle = 'red';
+                context.font = '30px sans-serif';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillText('Game Over', cs.width / 2, cs.height / 2);
+            }
+        };
+        document.onmousedown = function () {
+            bird.v = -bird.maxspeed / 5;
+        }
+
+        render();
+
+    });
+
+
+    //图片加载函数;
+    function loadImgs(value, callback) {
+        var onloadCount = 0;
+        imgsArr.forEach(function (value) {
+            var img = new Image();
+            img.src = 'imgs/' + value;
+            imgsObj[value.split('.')[0]] = img;
+            img.onload = function () {
+                onloadCount++;
+                if (onloadCount == imgsArr.length) {
+                    callback();
+                }
+            }
+        })
+    }
+</script>
